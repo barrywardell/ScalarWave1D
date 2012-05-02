@@ -60,8 +60,23 @@ int rhs(double tau, const double y[], double f[], void *params) {
   const double M = p.M;
 
   /* Calculate interior */
-  for(int i=1; i<N-1; i++)
+  for(int i=2; i<N-2; i++)
   {
+    double phi_xx = (-phi[i+2] + 16*phi[i+1] - 30*phi[i] + 16*phi[i-1] - phi[i-2])/(12.0*h*h);
+    phidot[i] = pi[i];
+    pidot[i]  = phi_xx - V(l, rm2M[i], M)*phi[i];
+  }
+
+  /* Second last points */
+  {
+    int i=1;
+    double phi_xx = (phi[i+1] - 2*phi[i] + phi[i-1])/(h*h);
+    phidot[i] = pi[i];
+    pidot[i]  = phi_xx - V(l, rm2M[i], M)*phi[i];
+  }
+
+  {
+    int i=N-2;
     double phi_xx = (phi[i+1] - 2*phi[i] + phi[i-1])/(h*h);
     phidot[i] = pi[i];
     pidot[i]  = phi_xx - V(l, rm2M[i], M)*phi[i];
