@@ -20,13 +20,16 @@
 #include <gsl/gsl_odeiv.h>
 #include <gsl/gsl_sf_lambert.h>
 
+/* User specified parameters */
 const int    N = 301;				/* Number of points */
 const double rstarMax = 50.0;		/* Size of grid */
-const double h = 2.0*rstarMax/N;    /* Grid spacing */
-const double k0 = 0.5*h;			/* Minimum time step size */
 const double T = 100;				/* Final time */
 const int    l = 1;					/* Spherical harmonic mode */
 const double M = 1.0;				/* Mass of the black hole */
+
+/* Derived parameters */
+const double h  = 2.0*rstarMax/N;   /* Grid spacing */
+const double k0 = 0.5*h;			/* Minimum time step size */
 
 /* Parameters which will be passed to the RHS calculation by the GSL */
 struct wave_params {
