@@ -21,15 +21,15 @@
 #include <gsl/gsl_sf_lambert.h>
 
 /* User specified parameters */
-const int    N = 301;				/* Number of points */
-const double rstarMax = 50.0;		/* Size of grid */
-const double T = 100;				/* Final time */
+const int    N = 20001;				/* Number of points */
+const double rstarMax = 1000.0;		/* Size of grid */
+const double T = 2000;				/* Final time */
 const int    l = 1;					/* Spherical harmonic mode */
 const double M = 1.0;				/* Mass of the black hole */
 
 /* Derived parameters */
-const double k0 = 0.5*h;			/* Minimum time step size */
 const double h  = 2.0*rstarMax/(N-1); /* Grid spacing */
+const double k0 = 0.25*h;			  /* Minimum time step size */
 
 /* Parameters which will be passed to the RHS calculation by the GSL */
 struct wave_params {
@@ -113,7 +113,7 @@ int main()
   /* Use a Runge-Kutta integrator with adaptive step-size */
   const gsl_odeiv_step_type * type = gsl_odeiv_step_rkf45;
   gsl_odeiv_step * s 			= gsl_odeiv_step_alloc (type, 2*N);
-  gsl_odeiv_control * c 		= gsl_odeiv_control_standard_new (1e-6, 1e-6, 1.0, 1.0);
+  gsl_odeiv_control * c 		= gsl_odeiv_control_standard_new (1e-10, 1e-10, 1.0, 1.0);
   gsl_odeiv_evolve * e 			= gsl_odeiv_evolve_alloc (2*N);
 
   /* Setup grid */
@@ -158,12 +158,6 @@ int main()
 
     /* Enforce CFL condition */
     if (k > k0)
-    {
-      k=k0;
-    }
-    
-    /* Keep a fixed time step */
-    if (k < k0)
     {
       k=k0;
     }
