@@ -69,14 +69,14 @@ int rhs(double tau, const double y[], double f[], void *params) {
   
   /* Horizon boundary */
   {
-	phidot[0]   = 0;
-	pidot[0]    = 0;
+	phidot[0] = - (-1.0)*(-3*phi[0]+4*phi[1]-phi[2])/(2.0*h);
+	pidot[0]  = - (-1.0)*(-3*pi[0]+4*pi[1]-pi[2])/(2.0*h);
   }
 	
   /* Spatial infinity boundary */
   {
-	phidot[N-1]   = 0;
-	pidot[N-1]    = 0;
+	phidot[N-1] = - 1.0*(phi[N-3]-4*phi[N-2]+3*phi[N-1])/(2.0*h);
+	pidot[N-1]  = - 1.0*(pi[N-3]-4*pi[N-2]+3*pi[N-1])/(2.0*h);
   }
 
   return GSL_SUCCESS;
