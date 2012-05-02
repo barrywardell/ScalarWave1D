@@ -103,7 +103,7 @@ void output(double t, double rstar[], double phi[], double pi[]) {
 //     printf("%.19f\t", phi[j]);
 //   }
   int i = (N-1)/2;
-  printf("%.19f\t%.19f\t%.19f\t%.19f\t", t, rstar[i], phi[i], pi[i]);
+  printf("%.19g\t%.19g\t%.19g\t%.19g\t", t, rstar[i], phi[i], pi[i]);
   printf("\n");
 }
 
