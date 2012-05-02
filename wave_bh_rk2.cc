@@ -109,6 +109,6 @@ int main()
     }
     
     // output(rstar, phi, pi);
-	printf("%.19f\t%.19f\n", t, phi[3000], pi[3000]);
+	printf("%.19f\t%.19f\t%.19f\n", t, phi[3000], pi[3000]);
   }
 }

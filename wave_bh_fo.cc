@@ -55,7 +55,6 @@ int rhs(double tau, const double y[], double f[], void *params) {
 
   struct wave_params p = *((struct wave_params*) params);
   const double *r = p.r;
-  const double *rstar = p.rstar;
   const int l = p.l;
   const double M = p.M;
 
