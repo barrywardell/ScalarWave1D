@@ -33,16 +33,16 @@ const double k0 = 0.5*h;			/* Minimum time step size */
 
 /* Parameters which will be passed to the RHS calculation by the GSL */
 struct wave_params {
-  const double *r;
-  const double *rstar;
+  const double *rm2M;
   double l; /* Spherical harmonic mode */
   double M; /* Black hole mass */
 };
 
 /* Define the potential */
-static double V(int l, double r, double M)
+static double V(int l, double rm2M, double M)
 {
-  return (r-2.0*M)*(l*(l+1)*r + 2.*M)/gsl_pow_4(r);
+  double r = rm2M + 2.0*M;
+  return rm2M*(l*(l+1)*r + 2.*M)/gsl_pow_4(r);
 }
 
 /* Calculate the right hand sides */
@@ -55,7 +55,7 @@ int rhs(double tau, const double y[], double f[], void *params) {
   double *pidot  = f + N;
 
   struct wave_params p = *((struct wave_params*) params);
-  const double *r = p.r;
+  const double *rm2M = p.rm2M;
   const int l = p.l;
   const double M = p.M;
 
@@ -64,7 +64,7 @@ int rhs(double tau, const double y[], double f[], void *params) {
   {
     double phi_xx = (phi[i+1] - 2*phi[i] + phi[i-1])/(h*h);
     phidot[i] = pi[i];
-    pidot[i]  = phi_xx - V(l, r[i], M)*phi[i];
+    pidot[i]  = phi_xx - V(l, rm2M[i], M)*phi[i];
   }
   
   /* Horizon boundary */
@@ -102,11 +102,11 @@ int main()
 
   /* Setup grid */
   double rstar0 = 12.772588722239782;
-  double *r     = new double[N];
+  double *rm2M  = new double[N];
   double *rstar = new double[N];
   for (int j = 0; j < N; j++) {
     rstar[j] = rstar0-rstarMax + j * h;
-    r[j] = 2.0*M*(1.0 + gsl_sf_lambert_W0(exp(-1.0+rstar[j]/(2.0*M))));
+    rm2M[j]  = 2.0*M*gsl_sf_lambert_W0(exp(-1.0+rstar[j]/(2.0*M)));
   }
   
   double *y   = new double[2*N];
@@ -114,7 +114,7 @@ int main()
   double *pi  = y + N;
 
   /* Parameters for the evolution */
-  struct wave_params params = {r, rstar, l, M};
+  struct wave_params params = {rm2M, l, M};
   gsl_odeiv_system sys = {rhs, NULL, 2*N, &params};
   
   double k = k0;
@@ -158,7 +158,7 @@ int main()
   gsl_odeiv_step_free (s);
   
   delete y;
-  delete r;
+  delete rm2M;
   delete rstar;
 
   return 0;
