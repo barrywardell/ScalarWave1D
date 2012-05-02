@@ -28,8 +28,8 @@ const int    l = 1;					/* Spherical harmonic mode */
 const double M = 1.0;				/* Mass of the black hole */
 
 /* Derived parameters */
-const double h  = 2.0*rstarMax/N;   /* Grid spacing */
 const double k0 = 0.5*h;			/* Minimum time step size */
+const double h  = 2.0*rstarMax/(N-1); /* Grid spacing */
 
 /* Parameters which will be passed to the RHS calculation by the GSL */
 struct wave_params {
@@ -98,11 +98,12 @@ int rhs(double tau, const double y[], double f[], void *params) {
 }
 
 /* Output values of fields */
-void output(double rstar[], double phi[], double pi[]) {
-  for (int j = 0; j < N; j++) {
-    //printf("%.19f\t%.19f\t%.19f\n", rstar[j], phi[j], pi[j]);
-    printf("%.19f\t", phi[j]);
-  }
+void output(double t, double rstar[], double phi[], double pi[]) {
+//   for (int j = 0; j < N; j++) {
+//     printf("%.19f\t", phi[j]);
+//   }
+  int i = (N-1)/2;
+  printf("%.19f\t%.19f\t%.19f\t%.19f\t", t, rstar[i], phi[i], pi[i]);
   printf("\n");
 }
 
@@ -142,7 +143,7 @@ int main()
   }
 
   /* Output the initial data */
-  output(rstar, phi, pi);
+  output(t, rstar, phi, pi);
 
   /* GSL time integration */
   while (t < T)
@@ -153,7 +154,7 @@ int main()
       break;
 
     /* Output the results */
-    output(rstar, phi, pi);
+    output(t, rstar, phi, pi);
 
     /* Enforce CFL condition */
     if (k > k0)
