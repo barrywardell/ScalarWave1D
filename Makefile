@@ -1,5 +1,5 @@
-CXXFLAGS=-Wall -g -O2 -I/opt/local/include
-LDFLAGS=-L/opt/local/lib -lgsl -lm
+CXXFLAGS=-Wall -g -O2 -I/opt/local/include -fopenmp
+LDFLAGS=-L/opt/local/lib -lgsl -lm -lgslcblas
 CXX = g++
 
 .PHONY: all

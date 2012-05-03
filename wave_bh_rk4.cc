@@ -33,6 +33,7 @@ const long double k = 0.25L*h;			 /* Minimum time step size */
 void rhs(const long double V[], const long double phi[], const long double rho[], long double phidot[], long double rhodot[])
 {
   /* Calculate interior */
+#pragma omp parallel for
   for(int i=2; i<N-2; i++)
   {
     long double phi_xx = (-phi[i+2] + 16L*phi[i+1] - 30L*phi[i] + 16L*phi[i-1] - phi[i-2])/(12.0L*h*h);
@@ -126,6 +127,7 @@ int main()
   	/* Calculate k1 term in RK4 formula */
   	rhs(V, phi, rho, phidot, rhodot);
 
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       k1_phi[j] = k * phidot[j];
@@ -133,6 +135,7 @@ int main()
     }
 
     /* Calculate k2 term in RK4 formula */
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       phi_tmp[j] = phi[j] + 0.5L*k1_phi[j];
@@ -141,6 +144,7 @@ int main()
 
   	rhs(V, phi_tmp, rho_tmp, phidot, rhodot);
 
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       k2_phi[j] = k * phidot[j];
@@ -148,6 +152,7 @@ int main()
     }
 
     /* Calculate k3 term in RK4 formula */
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       phi_tmp[j] = phi[j] + 0.5L*k2_phi[j];
@@ -156,6 +161,7 @@ int main()
 
   	rhs(V, phi_tmp, rho_tmp, phidot, rhodot);
 
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       k3_phi[j] = k * phidot[j];
@@ -163,6 +169,7 @@ int main()
     }
 
     /* Calculate k4 term in RK4 formula */
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       phi_tmp[j] = phi[j] + k3_phi[j];
@@ -171,6 +178,7 @@ int main()
 
   	rhs(V, phi_tmp, rho_tmp, phidot, rhodot);
 
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       k4_phi[j] = k * phidot[j];
@@ -178,6 +186,7 @@ int main()
     }
 
 	/* Apply RK4 formula to update variables */
+#pragma omp parallel for
     for (int j = 0; j < N; j++)
     {
       phi[j] = phi[j] + (k1_phi[j]+2.0L*k2_phi[j]+2.0L*k3_phi[j]+k4_phi[j])/6.0L;
