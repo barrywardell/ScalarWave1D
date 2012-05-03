@@ -19,9 +19,9 @@
 #include <gsl/gsl_sf_lambert.h>
 
 /* User specified parameters */
-const int    N = 20001;				/* Number of points */
-const long double rstarMax = 1000.0L;		/* Size of grid */
-const long double T = 2000L;				/* Final time */
+const int    N = 40001;				/* Number of points */
+const long double rstarMax = 4000.0L;		/* Size of grid */
+const long double T = 8000L;				/* Final time */
 const int    l = 1;					/* Spherical harmonic mode */
 const long double M = 1.0L;				/* Mass of the black hole */
 
@@ -85,14 +85,19 @@ int main()
   long double rstar0 = 12.7725887222397812376689284858327062723020005374410210164827L;
   long double *V     = new long double[N];
   long double *rstar = new long double[N];
+
+  FILE * potential;
+  potential = fopen ("potential.dat","r");
   for (int j = 0; j < N; j++) {
     rstar[j] = rstar0-rstarMax + j * h;
     
     /* Pre-compute the potential */
-    long double rm2M = 2.0L*M*gsl_sf_lambert_W0(exp(-1.0L+rstar[j]/(2.0L*M)));
+    /*long double rm2M = 2.0L*M*gsl_sf_lambert_W0(exp(-1.0L+rstar[j]/(2.0L*M)));
     long double r = rm2M + 2.0L*M;
-	V[j] = rm2M*(l*(l+1)*r + 2.0L*M)/(r*r*r*r);
+	V[j] = rm2M*(l*(l+1)*r + 2.0L*M)/(r*r*r*r);*/
+	fscanf(potential, "%Lg\n", &V[j]);
   }
+  fclose (potential);
 
   long double *phi = new long double[N];
   long double *rho = new long double[N];
