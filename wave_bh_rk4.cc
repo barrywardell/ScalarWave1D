@@ -97,14 +97,10 @@ int main()
   long double *rho = new long double[N];
 
   /* Initial Conditions: a gaussian about r=10 */
-  long double t = 0;
   for (int j = 0; j < N; j++) {
     phi[j] = exp(-(rstar[j]-rstar0)*(rstar[j]-rstar0)/2.0L);
     rho[j] = -(rstar[j]-rstar0)*phi[j];
   }
-
-  /* Output the initial data */
-  output(t, rstar, phi, rho);
 
   /* Allocate scratch space for integration */
   long double *phidot = new long double[N];
@@ -124,6 +120,9 @@ int main()
   /* Fourth order Runge-Kutta time integration */
   for (long double t = 0; t <= T; t+=k)
   {
+    /* Output the results */
+    output(t, rstar, phi, rho);
+
   	/* Calculate k1 term in RK4 formula */
   	rhs(V, phi, rho, phidot, rhodot);
 
@@ -184,9 +183,6 @@ int main()
       phi[j] = phi[j] + (k1_phi[j]+2.0L*k2_phi[j]+2.0L*k3_phi[j]+k4_phi[j])/6.0L;
       rho[j] = rho[j] + (k1_rho[j]+2.0L*k2_rho[j]+2.0L*k3_rho[j]+k4_rho[j])/6.0L;
     }
-    
-    /* Output the results */
-    output(t, rstar, phi, rho);
   }
   
   delete phi;
