@@ -19,23 +19,23 @@
 #include <gsl/gsl_sf_lambert.h>
 
 /* User specified parameters */
-const int    N = 1001;				/* Number of points */
-const double rstarMax = 100.0;		/* Size of grid */
-const double T = 200;				/* Final time */
+const int    N = 20001;				/* Number of points */
+const long double rstarMax = 1000.0L;		/* Size of grid */
+const long double T = 2000L;				/* Final time */
 const int    l = 1;					/* Spherical harmonic mode */
-const double M = 1.0;				/* Mass of the black hole */
+const long double M = 1.0L;				/* Mass of the black hole */
 
 /* Derived parameters */
-const double h = 2.0*rstarMax/(N-1); /* Grid spacing */
-const double k = 0.25*h;			 /* Minimum time step size */
+const long double h = 2.0L*rstarMax/(N-1); /* Grid spacing */
+const long double k = 0.25L*h;			 /* Minimum time step size */
 
 /* Calculate the right hand sides */
-void rhs(const double V[], const double phi[], const double rho[], double phidot[], double rhodot[])
+void rhs(const long double V[], const long double phi[], const long double rho[], long double phidot[], long double rhodot[])
 {
   /* Calculate interior */
   for(int i=2; i<N-2; i++)
   {
-    double phi_xx = (-phi[i+2] + 16*phi[i+1] - 30*phi[i] + 16*phi[i-1] - phi[i-2])/(12.0*h*h);
+    long double phi_xx = (-phi[i+2] + 16L*phi[i+1] - 30L*phi[i] + 16L*phi[i-1] - phi[i-2])/(12.0L*h*h);
     phidot[i] = rho[i];
     rhodot[i]  = phi_xx - V[i]*phi[i];
   }
@@ -43,63 +43,63 @@ void rhs(const double V[], const double phi[], const double rho[], double phidot
   /* Second last points */
   {
     int i=1;
-    double phi_xx = (phi[i+1] - 2*phi[i] + phi[i-1])/(h*h);
+    long double phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
     phidot[i] = rho[i];
     rhodot[i]  = phi_xx - V[i]*phi[i];
   }
 
   {
     int i=N-2;
-    double phi_xx = (phi[i+1] - 2*phi[i] + phi[i-1])/(h*h);
+    long double phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
     phidot[i] = rho[i];
     rhodot[i]  = phi_xx - V[i]*phi[i];
   }
   
   /* Horizon boundary */
   {
-	phidot[0] = - (-1.0)*(-3*phi[0]+4*phi[1]-phi[2])/(2.0*h);
-	rhodot[0]  = - (-1.0)*(-3*rho[0]+4*rho[1]-rho[2])/(2.0*h);
+	phidot[0] = - (-1.0L)*(-3L*phi[0]+4L*phi[1]-phi[2])/(2.0L*h);
+	rhodot[0]  = - (-1.0L)*(-3L*rho[0]+4L*rho[1]-rho[2])/(2.0L*h);
   }
 	
   /* Spatial infinity boundary */
   {
-	phidot[N-1] = - 1.0*(phi[N-3]-4*phi[N-2]+3*phi[N-1])/(2.0*h);
-	rhodot[N-1]  = - 1.0*(rho[N-3]-4*rho[N-2]+3*rho[N-1])/(2.0*h);
+	phidot[N-1] = - 1.0L*(phi[N-3]-4L*phi[N-2]+3L*phi[N-1])/(2.0L*h);
+	rhodot[N-1]  = - 1.0L*(rho[N-3]-4L*rho[N-2]+3L*rho[N-1])/(2.0L*h);
   }
 }
 
 /* Output values of fields */
-void output(double t, double rstar[], double phi[], double rho[]) {
+void output(long double t, long double rstar[], long double phi[], long double rho[]) {
 //   for (int j = 0; j < N; j++) {
 //     printf("%.19f\t", phi[j]);
 //   }
   int i = (N-1)/2;
-  printf("%.19g\t%.19g\t%.19g\t%.19g\t", t, rstar[i], phi[i], rho[i]);
+  printf("%.19Lg\t%.19Lg\t%.19Lg\t%.19Lg\t", t, rstar[i], phi[i], rho[i]);
   printf("\n");
 }
 
 int main()
 {
   /* Setup grid */
-  double rstar0 = 12.772588722239782;
-  double *V     = new double[N];
-  double *rstar = new double[N];
+  long double rstar0 = 12.7725887222397812376689284858327062723020005374410210164827L;
+  long double *V     = new long double[N];
+  long double *rstar = new long double[N];
   for (int j = 0; j < N; j++) {
     rstar[j] = rstar0-rstarMax + j * h;
     
     /* Pre-compute the potential */
-    double rm2M = 2.0*M*gsl_sf_lambert_W0(exp(-1.0+rstar[j]/(2.0*M)));
-    double r = rm2M + 2.0*M;
-	V[j] = rm2M*(l*(l+1)*r + 2.*M)/gsl_pow_4(r);
+    long double rm2M = 2.0L*M*gsl_sf_lambert_W0(exp(-1.0L+rstar[j]/(2.0L*M)));
+    long double r = rm2M + 2.0L*M;
+	V[j] = rm2M*(l*(l+1)*r + 2.0L*M)/(r*r*r*r);
   }
 
-  double *phi = new double[N];
-  double *rho = new double[N];
+  long double *phi = new long double[N];
+  long double *rho = new long double[N];
 
   /* Initial Conditions: a gaussian about r=10 */
-  double t = 0;
+  long double t = 0;
   for (int j = 0; j < N; j++) {
-    phi[j] = exp(-(rstar[j]-rstar0)*(rstar[j]-rstar0)/2.0);
+    phi[j] = exp(-(rstar[j]-rstar0)*(rstar[j]-rstar0)/2.0L);
     rho[j] = -(rstar[j]-rstar0)*phi[j];
   }
 
@@ -107,22 +107,22 @@ int main()
   output(t, rstar, phi, rho);
 
   /* Allocate scratch space for integration */
-  double *phidot = new double[N];
-  double *rhodot = new double[N];
-  double *phi_tmp = new double[N];
-  double *rho_tmp = new double[N];
+  long double *phidot = new long double[N];
+  long double *rhodot = new long double[N];
+  long double *phi_tmp = new long double[N];
+  long double *rho_tmp = new long double[N];
   
-  double *k1_phi = new double[N]; 
-  double *k1_rho = new double[N];
-  double *k2_phi = new double[N];
-  double *k2_rho = new double[N];  
-  double *k3_phi = new double[N]; 
-  double *k3_rho = new double[N];
-  double *k4_phi = new double[N];
-  double *k4_rho = new double[N];
+  long double *k1_phi = new long double[N];
+  long double *k1_rho = new long double[N];
+  long double *k2_phi = new long double[N];
+  long double *k2_rho = new long double[N];
+  long double *k3_phi = new long double[N];
+  long double *k3_rho = new long double[N];
+  long double *k4_phi = new long double[N];
+  long double *k4_rho = new long double[N];
 
   /* Fourth order Runge-Kutta time integration */
-  for (double t = 0; t <= T; t+=k)
+  for (long double t = 0; t <= T; t+=k)
   {
   	/* Calculate k1 term in RK4 formula */
   	rhs(V, phi, rho, phidot, rhodot);
@@ -136,8 +136,8 @@ int main()
     /* Calculate k2 term in RK4 formula */
     for (int j = 0; j < N; j++)
     {
-      phi_tmp[j] = phi[j] + 0.5*k1_phi[j];
-      rho_tmp[j] = rho[j] + 0.5*k1_rho[j];
+      phi_tmp[j] = phi[j] + 0.5L*k1_phi[j];
+      rho_tmp[j] = rho[j] + 0.5L*k1_rho[j];
     }
 
   	rhs(V, phi_tmp, rho_tmp, phidot, rhodot);
@@ -151,8 +151,8 @@ int main()
     /* Calculate k3 term in RK4 formula */
     for (int j = 0; j < N; j++)
     {
-      phi_tmp[j] = phi[j] + 0.5*k2_phi[j];
-      rho_tmp[j] = rho[j] + 0.5*k2_rho[j];
+      phi_tmp[j] = phi[j] + 0.5L*k2_phi[j];
+      rho_tmp[j] = rho[j] + 0.5L*k2_rho[j];
     }
 
   	rhs(V, phi_tmp, rho_tmp, phidot, rhodot);
@@ -181,8 +181,8 @@ int main()
 	/* Apply RK4 formula to update variables */
     for (int j = 0; j < N; j++)
     {
-      phi[j] = phi[j] + (k1_phi[j]+2.0*k2_phi[j]+2*k3_phi[j]+k4_phi[j])/6.0;
-      rho[j] = rho[j] + (k1_rho[j]+2.0*k2_rho[j]+2*k3_rho[j]+k4_rho[j])/6.0;
+      phi[j] = phi[j] + (k1_phi[j]+2.0L*k2_phi[j]+2.0L*k3_phi[j]+k4_phi[j])/6.0L;
+      rho[j] = rho[j] + (k1_rho[j]+2.0L*k2_rho[j]+2.0L*k3_rho[j]+k4_rho[j])/6.0L;
     }
     
     /* Output the results */
