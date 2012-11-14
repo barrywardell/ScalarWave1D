@@ -16,31 +16,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-extern "C" {
-#include <quadmath.h>
-}
+
+#include "precision.h"
 
 /* User specified parameters */
-const int    N = 40001;				/* Number of points */
-const __float128 rstarMax = 4000.0L;		/* Size of grid */
-const __float128 T = 8000L;				/* Final time */
-const int    l = 1;					/* Spherical harmonic mode */
-const __float128 M = 1.0L;				/* Mass of the black hole */
-const int scaling = 0;
+const int  N        = 40001;   /* Number of points */
+const REAL rstarMax = 4000.0L; /* Size of grid */
+const REAL T        = 100L;   /* Final time */
+const int  l        = 1;       /* Spherical harmonic mode */
+const REAL M        = 1.0L;    /* Mass of the black hole */
+const int  scaling  = 0;
 
 /* Derived parameters */
-const __float128 h = 2.0L*rstarMax/(N-1); /* Grid spacing */
-const __float128 k = 0.25L*h;			 /* Minimum time step size */
+const REAL h = 2.0L*rstarMax/(N-1); /* Grid spacing */
+const REAL k = 0.25L*h;             /* Minimum time step size */
 
 /* Calculate the right hand sides */
-void rhs(const __float128 t, const __float128 V[], const __float128 phi[], const __float128 rho[], __float128 phidot[], __float128 rhodot[])
+void rhs(const REAL t, const REAL V[], const REAL phi[], const REAL rho[], REAL phidot[], REAL rhodot[])
 {
-  __float128 rho_coeff, phi_coeff;
-  __float128 t_scaling_2, t_scaling_1, t_scaling;
+  REAL rho_coeff, phi_coeff;
+  REAL t_scaling_2, t_scaling_1, t_scaling;
 
-  __float128 t3 = t*t*t;
-  __float128 t4 = t3*t;
-  __float128 t5 = t4*t;
+  REAL t3 = t*t*t;
+  REAL t4 = t3*t;
+  REAL t5 = t4*t;
 
   switch(scaling) {
   case 0:
@@ -73,7 +72,7 @@ void rhs(const __float128 t, const __float128 V[], const __float128 phi[], const
 #pragma omp parallel for
   for(int i=2; i<N-2; i++)
   {
-    __float128 phi_xx = (-phi[i+2] + 16L*phi[i+1] - 30L*phi[i] + 16L*phi[i-1] - phi[i-2])/(12.0L*h*h);
+    REAL phi_xx = (-phi[i+2] + 16L*phi[i+1] - 30L*phi[i] + 16L*phi[i-1] - phi[i-2])/(12.0L*h*h);
     phidot[i] = rho[i];
     rhodot[i]  = phi_xx - phi[i] * V[i]
       + rho[i] * rho_coeff
@@ -83,7 +82,7 @@ void rhs(const __float128 t, const __float128 V[], const __float128 phi[], const
   /* Second last points */
   {
     int i=1;
-    __float128 phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
+    REAL phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
     phidot[i] = rho[i];
     rhodot[i]  = phi_xx - phi[i] * V[i]
       + rho[i] * rho_coeff
@@ -92,7 +91,7 @@ void rhs(const __float128 t, const __float128 V[], const __float128 phi[], const
 
   {
     int i=N-2;
-    __float128 phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
+    REAL phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
     phidot[i] = rho[i];
     rhodot[i]  = phi_xx - phi[i] * V[i]
       + rho[i] * rho_coeff
@@ -113,11 +112,13 @@ void rhs(const __float128 t, const __float128 V[], const __float128 phi[], const
 }
 
 /* Output values of fields */
-void output(__float128 t, __float128 rstar[], __float128 phi[], __float128 rho[]) {
+void output(REAL t, REAL rstar[], REAL phi[], REAL rho[]) {
 //   for (int j = 0; j < N; j++) {
 //     printf("%.19f\t", phi[j]);
 //   }
   int i = (N-1)/2;
+
+#ifdef FP_PRECISION_QUAD
   char* y = new char[1000];
   quadmath_snprintf(y, 1000, "%.19Qg", t);
   printf("%s\t", y);
@@ -128,56 +129,68 @@ void output(__float128 t, __float128 rstar[], __float128 phi[], __float128 rho[]
   quadmath_snprintf(y, 1000, "%.19Qg", rho[i]);
   printf("%s", y);
   printf("\n");
+  delete y;
+#elif defined FP_PRECISION_EXTENDED_DOUBLE
+  printf("%.19Lg\t%.19Lg\t%.19Lg\t%.19Lg\n", t, rstar[i], phi[i], rho[i]);
+#else
+  printf("%.16g\t%.16g\t%.16g\t%.16g\n", t, rstar[i], phi[i], rho[i]);
+#endif
 }
 
 int main()
 {
   /* Setup grid */
-  __float128 rstar0 = 12.7725887222397812376689284858327062723020005374410210164827L;
-  __float128 *V     = new __float128[N];
-  __float128 *rstar = new __float128[N];
+  REAL rstar0 = 12.7725887222397812376689284858327062723020005374410210164827L;
+  REAL *V     = new REAL[N];
+  REAL *rstar = new REAL[N];
 
   FILE * potential;
   potential = fopen ("potential.dat","r");
   for (int j = 0; j < N; j++) {
     rstar[j] = rstar0-rstarMax + j * h;
-    char tmp[1000];
     
     /* Pre-compute the potential */
-    /*__float128 rm2M = 2.0L*M*gsl_sf_lambert_W0(exp(-1.0L+rstar[j]/(2.0L*M)));
-    __float128 r = rm2M + 2.0L*M;
+    /*REAL rm2M = 2.0L*M*gsl_sf_lambert_W0(exp(-1.0L+rstar[j]/(2.0L*M)));
+    REAL r = rm2M + 2.0L*M;
 	V[j] = rm2M*(l*(l+1)*r + 2.0L*M)/(r*r*r*r);*/
+#ifdef FP_PRECISION_QUAD
+    char tmp[1000];
 	fscanf(potential, "%s\n", tmp);
 	V[j] = strtoflt128 (tmp, NULL);
+#elif defined FP_PRECISION_EXTENDED_DOUBLE
+	fscanf(potential, "%Lg\n", &V[j]);
+#else
+	fscanf(potential, "%lg\n", &V[j]);
+#endif
   }
   fclose (potential);
 
-  __float128 *phi = new __float128[N];
-  __float128 *rho = new __float128[N];
+  REAL *phi = new REAL[N];
+  REAL *rho = new REAL[N];
 
   /* Initial Conditions: a gaussian about r=10 */
   for (int j = 0; j < N; j++) {
-    phi[j] = expq(-(rstar[j]-rstar0)*(rstar[j]-rstar0)/2.0L);
+    phi[j] = EXP(-(rstar[j]-rstar0)*(rstar[j]-rstar0)/2.0L);
     rho[j] = -(rstar[j]-rstar0)*phi[j];
   }
 
   /* Allocate scratch space for integration */
-  __float128 *phidot = new __float128[N];
-  __float128 *rhodot = new __float128[N];
-  __float128 *phi_tmp = new __float128[N];
-  __float128 *rho_tmp = new __float128[N];
+  REAL *phidot = new REAL[N];
+  REAL *rhodot = new REAL[N];
+  REAL *phi_tmp = new REAL[N];
+  REAL *rho_tmp = new REAL[N];
   
-  __float128 *k1_phi = new __float128[N];
-  __float128 *k1_rho = new __float128[N];
-  __float128 *k2_phi = new __float128[N];
-  __float128 *k2_rho = new __float128[N];
-  __float128 *k3_phi = new __float128[N];
-  __float128 *k3_rho = new __float128[N];
-  __float128 *k4_phi = new __float128[N];
-  __float128 *k4_rho = new __float128[N];
+  REAL *k1_phi = new REAL[N];
+  REAL *k1_rho = new REAL[N];
+  REAL *k2_phi = new REAL[N];
+  REAL *k2_rho = new REAL[N];
+  REAL *k3_phi = new REAL[N];
+  REAL *k3_rho = new REAL[N];
+  REAL *k4_phi = new REAL[N];
+  REAL *k4_rho = new REAL[N];
 
   /* Fourth order Runge-Kutta time integration */
-  for (__float128 t = 0; t <= T; t+=k)
+  for (REAL t = 0; t <= T; t+=k)
   {
     /* Output the results */
     output(t, rstar, phi, rho);
