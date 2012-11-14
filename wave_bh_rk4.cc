@@ -25,7 +25,6 @@ const REAL rstarMax = 4000.0L; /* Size of grid */
 const REAL T        = 100L;   /* Final time */
 const int  l        = 1;       /* Spherical harmonic mode */
 const REAL M        = 1.0L;    /* Mass of the black hole */
-const int  scaling  = 0;
 
 /* Derived parameters */
 const REAL h = 2.0L*rstarMax/(N-1); /* Grid spacing */
@@ -34,49 +33,13 @@ const REAL k = 0.25L*h;             /* Minimum time step size */
 /* Calculate the right hand sides */
 void rhs(const REAL t, const REAL V[], const REAL phi[], const REAL rho[], REAL phidot[], REAL rhodot[])
 {
-  REAL rho_coeff, phi_coeff;
-  REAL t_scaling_2, t_scaling_1, t_scaling;
-
-  REAL t3 = t*t*t;
-  REAL t4 = t3*t;
-  REAL t5 = t4*t;
-
-  switch(scaling) {
-  case 0:
-    phi_coeff = 0.0L;
-    rho_coeff = 0.0L;
-    break;
-  case 1:
-    phi_coeff = -2.0L / ((1.0L + t) * (1.0L + t));
-    rho_coeff = 2.0L / (1.0L + t);
-    break;
-  case 2:
-    phi_coeff = (2.0L - 6.0L*t*t) / ((1.0L + t) * (1.0L + t));
-    rho_coeff = 4.0L * t / (1.0L + t*t);
-    break;
-  case 5:
-    phi_coeff = -(10.0L*t3)*(3.0L*t5-2.0L) / ((1.0L + t5) * (1.0L + t5));
-    rho_coeff = 10.0L * t4 / (1.0L + t5);
-    break;
-  default:
-    t_scaling_2 = pow(t, scaling-2.0L);
-    t_scaling_1 = t*t_scaling_2;
-    t_scaling   = t*t_scaling_1;
-    phi_coeff = - scaling * t_scaling_2 * (1.0L + t_scaling + scaling * (t_scaling - 1.0L)) /
-        ((1.0L + t_scaling) * (1.0L + t_scaling));
-    rho_coeff = 2.0L * scaling * t_scaling_1 / (1.0L + t_scaling);
-    break;
-  }
-
   /* Calculate interior */
 #pragma omp parallel for
   for(int i=2; i<N-2; i++)
   {
     REAL phi_xx = (-phi[i+2] + 16L*phi[i+1] - 30L*phi[i] + 16L*phi[i-1] - phi[i-2])/(12.0L*h*h);
     phidot[i] = rho[i];
-    rhodot[i]  = phi_xx - phi[i] * V[i]
-      + rho[i] * rho_coeff
-      + phi[i] * phi_coeff;
+    rhodot[i]  = phi_xx - phi[i] * V[i];
   }
 
   /* Second last points */
@@ -84,18 +47,14 @@ void rhs(const REAL t, const REAL V[], const REAL phi[], const REAL rho[], REAL 
     int i=1;
     REAL phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
     phidot[i] = rho[i];
-    rhodot[i]  = phi_xx - phi[i] * V[i]
-      + rho[i] * rho_coeff
-      + phi[i] * phi_coeff;
+    rhodot[i]  = phi_xx - phi[i] * V[i];
   }
 
   {
     int i=N-2;
     REAL phi_xx = (phi[i+1] - 2L*phi[i] + phi[i-1])/(h*h);
     phidot[i] = rho[i];
-    rhodot[i]  = phi_xx - phi[i] * V[i]
-      + rho[i] * rho_coeff
-      + phi[i] * phi_coeff;
+    rhodot[i]  = phi_xx - phi[i] * V[i];
   }
   
   /* Horizon boundary */
