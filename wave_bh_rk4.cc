@@ -19,6 +19,10 @@
 
 #include "precision.h"
 
+extern "C" {
+#include <gsl/gsl_sf_lambert.h>
+}
+
 /* User specified parameters */
 const int  N        = 40001;   /* Number of points */
 const REAL rstarMax = 4000.0L; /* Size of grid */
@@ -103,26 +107,26 @@ int main()
   REAL *V     = new REAL[N];
   REAL *rstar = new REAL[N];
 
-  FILE * potential;
-  potential = fopen ("potential.dat","r");
+//   FILE * potential;
+//   potential = fopen ("potential.dat","r");
   for (int j = 0; j < N; j++) {
     rstar[j] = rstar0-rstarMax + j * h;
     
     /* Pre-compute the potential */
-    /*REAL rm2M = 2.0L*M*gsl_sf_lambert_W0(exp(-1.0L+rstar[j]/(2.0L*M)));
+    REAL rm2M = 2.0L*M*gsl_sf_lambert_W0(exp(-1.0L+rstar[j]/(2.0L*M)));
     REAL r = rm2M + 2.0L*M;
-	V[j] = rm2M*(l*(l+1)*r + 2.0L*M)/(r*r*r*r);*/
-#ifdef FP_PRECISION_QUAD
-    char tmp[1000];
-	fscanf(potential, "%s\n", tmp);
-	V[j] = strtoflt128 (tmp, NULL);
-#elif defined FP_PRECISION_EXTENDED_DOUBLE
-	fscanf(potential, "%Lg\n", &V[j]);
-#else
-	fscanf(potential, "%lg\n", &V[j]);
-#endif
+	V[j] = rm2M*(l*(l+1)*r + 2.0L*M)/(r*r*r*r);
+// #ifdef FP_PRECISION_QUAD
+//     char tmp[1000];
+// 	fscanf(potential, "%s\n", tmp);
+// 	V[j] = strtoflt128 (tmp, NULL);
+// #elif defined FP_PRECISION_EXTENDED_DOUBLE
+// 	fscanf(potential, "%Lg\n", &V[j]);
+// #else
+// 	fscanf(potential, "%lg\n", &V[j]);
+// #endif
   }
-  fclose (potential);
+//   fclose (potential);
 
   REAL *phi = new REAL[N];
   REAL *rho = new REAL[N];
